@@ -1,6 +1,12 @@
+import parse5 from 'parse5';
+import fromParse5 from 'hast-util-from-parse5';
 import visit from 'unist-util-visit';
 
 import { defaultTransformers } from './transformers';
+
+// results in an AST node of type "root" with a single "children" node of type "element"
+// so we return the first (and only) child "element" node
+const htmlToHast = (string) => fromParse5(parse5.parse(string)).children[0];
 
 const getUrlString = (url) => {
   const urlString = url.startsWith('http') ? url : `https://${url}`;
@@ -55,9 +61,8 @@ export default async (
               await cache.set(urlString, html);
             }
 
-            node.type = `html`;
-            node.value = html;
-            node.children = undefined;
+            // override the node with the html AST
+            paragraphNode.children[0] = htmlToHast(html);
           } catch (error) {
             error.message = `The following error appeared while processing '${urlString}':\n\n${error.message}`;
 
