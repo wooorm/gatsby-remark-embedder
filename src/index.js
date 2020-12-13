@@ -6,7 +6,7 @@ import { defaultTransformers } from './transformers';
 
 // results in an AST node of type "root" with a single "children" node of type "element"
 // so we return the first (and only) child "element" node
-const htmlToHast = (string) => fromParse5(parse5.parse(string)).children[0];
+const htmlToHast = (string) => fromParse5(parse5.parseFragment(string));
 
 const getUrlString = (url) => {
   const urlString = url.startsWith('http') ? url : `https://${url}`;
@@ -61,8 +61,14 @@ export default async (
               await cache.set(urlString, html);
             }
 
-            // override the node with the html AST
-            paragraphNode.children[0] = htmlToHast(html);
+            const link = paragraphNode.children[0];
+            const htmlElement = htmlToHast(html);
+
+            link.data = {
+              hName: htmlElement.tagName,
+              hProperties: htmlElement.properties,
+              hChildren: htmlElement.children,
+            };
           } catch (error) {
             error.message = `The following error appeared while processing '${urlString}':\n\n${error.message}`;
 
